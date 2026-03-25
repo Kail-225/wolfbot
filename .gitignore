@@ -49,10 +49,6 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
-test.py
-boot1.py
-logs.txt
 # Translations
 *.mo
 *.pot

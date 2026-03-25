@@ -24,8 +24,6 @@ def add_group(a,b):
             bf=con.execute(resp).fetchone()
             if bf==None:
                 con.execute(resp1)
-            else:
-                return
     except Exception as e:
         print(f"Ошибка: {e}")
     
@@ -35,6 +33,15 @@ def search_group(a):
         resp=select(table).where(table.c.IdGroup==a)
         with engine.begin() as con:
             return con.execute(resp).fetchone()[0]
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def update_group(a,b):
+    try:
+        table=Table("groups",MetaData(),autoload_with=engine)
+        resp=update(table).where(table.c.IdGroup==a).values(NameGroup=b)
+        with engine.begin() as con:
+            con.execute(resp)
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -60,9 +67,11 @@ def add_user(a,b,c,d):
     group=search_group(c)
     try:
         table=Table("users",MetaData(),autoload_with=engine)
-        resp=insert(table).values(IdUser=a,NameUser=b,GropUser=group,MoneyUser=0,WarnsUser=0,StatusUser=d)
+        resp=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
+        resp1=insert(table).values(IdUser=a,NameUser=b,GroupUser=group,MoneyUser=0,WarnsUser=0,StatusUser=d)
         with engine.begin() as con:
-            con.execute(resp)
+            if con.execute(resp).fetchone()==None:
+                con.execute(resp1)
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -86,12 +95,25 @@ def search_username(a,b):
     except Exception as e:
         print(f"Ошибка: {e}")
 
+def update_username(a,b):
+    try:
+        table=Table("users",MetaData(),autoload_with=engine)
+        resp=update(table).where(table.c.IdUser==a).values(NameUser=b)
+        with engine.begin() as con:
+            con.execute(resp)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
 def search_filter(a,b):
     try:
         table=Table("filter",MetaData(),autoload_with=engine)
         resp=select(table).where(table.c.IdMember==a,table.c.NameMember==b)
         with engine.begin() as con:
-            return con.execute(resp).fetchone()[0]
+            res=con.execute(resp).fetchone()
+        if res==None:
+            return None
+        else:
+            return res[0]
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -129,6 +151,18 @@ def search_money(a,b):
     except Exception as e:
         print(f"Ошибка: {e}")
 
+def minus_money(a,b,c,d):
+    group=search_group(b)
+    money=search_money(a,b)
+    try:
+        table=Table("users",MetaData(),autoload_with=engine)
+        resp=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(MoneyUser=money-c*d)
+        with engine.begin() as con:
+            write_log(f"Пользователь под id {a} потратил {c*d} монет")
+            return con.execute(resp)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
 def search_warn(a,b):
     group=search_group(b)
     try:
@@ -148,6 +182,15 @@ def search_warn_group(a):
     except Exception as e:
         print(f"Ошибка: {e}")
 
+def change_warn_group(a,b):
+    try:
+        table=Table("groups",MetaData(),autoload_with=engine)
+        resp=update(table).where(table.c.IdGroup==a).values(Warns=b)
+        with engine.begin() as con:
+            con.execute(resp)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
 def support():
     sup=""
     try:
@@ -156,7 +199,7 @@ def support():
         with engine.begin() as con:
             com=con.execute(resp).fetchall()
         for i in com:
-            sup+=f"[{i[0]}](https://t.me/{i[1]})\n"
+            sup+=f"[{i[1]}](https://t.me/{i[2]})\n"
         return sup
     except Exception as e:
         print(f"Ошибка: {e}")
@@ -206,6 +249,26 @@ def add_item(a,b,c,d):
     except Exception as e:
         print(f"Ошибка: {e}")
 
+def search_item(a):
+    try:
+        table=Table("magazin",MetaData(),autoload_with=engine)
+        resp=select(table).where(table.c.NameItem==a)
+        with engine.begin() as con:
+            return con.execute(resp).fetchone()
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def minus_item(a,b):
+    count=search_item(a)[2]
+    try:
+        table=Table("magazin",MetaData(),autoload_with=engine)
+        resp=update(table).where(table.c.NameItem==a).values(CountItem=count-b)
+        with engine.begin() as con:
+            write_log(f"Из магазина выкуплен {a} в количестве {b}")
+            return con.execute(resp).fetchone()
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
 def search_magazin():
     try:
         table=Table("magazin",MetaData(),autoload_with=engine)
@@ -225,5 +288,16 @@ def update_magazin():
                 resp1=update(table).where(table.c.NameItem==i[1]).values(CountItem=i[3])
                 con.execute(resp1)
         write_log("Магазин обновлён")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def add_read(a,b,c,d,e):
+    try:
+        table=Table("journal",MetaData(),autoload_with=engine)
+        group=search_group(b)
+        user=search_user(a,b)
+        resp=insert(table).values(Date=e,IdUser=user,GroupUser=group,Type=c,Reason=d)
+        with engine.begin() as con:
+            con.execute(resp)
     except Exception as e:
         print(f"Ошибка: {e}")
