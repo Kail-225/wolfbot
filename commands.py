@@ -11,6 +11,19 @@ def coms(bot):
         markup.add(btn1,btn2)
         sup=support()
         await bot.send_message(message.chat.id,f"Помощь по работе бота wolfbot.\nТехническая поддержка:\n{sup}",reply_markup = markup, parse_mode='Markdown',disable_web_page_preview = True)
+    @bot.message_handler(regexp="Кто я|I'm",chat_types=["supergroup","group"])
+    async def info_user(message):
+        info=search_info_user(message.from_user.id,message.chat.id)
+        if info[5]==None:
+            guild="Не состоит"
+        else:
+            guild=search_info_guild(info[5])[0][1]
+        status=await bot.get_chat_member(message.chat.id,message.from_user.id)
+        if info[6]==None:
+            inv="Пусто"
+        else:
+            inv=info[6]
+        await bot.send_message(message.chat.id, f"Информация о пользователе {status.user.first_name}\nСтатус: {status.status}\nМонеты: {info[4]}\nКоличество предупреждений: {info[7]}\nГильдия: {guild}\nИнвентарь: {inv}",reply_to_message_id=message.id)
     @bot.message_handler(regexp='Кто админы|Admins',chat_types=["supergroup","group"])
     async def admins(message):
         admins_chat=""
@@ -41,14 +54,23 @@ def coms(bot):
                     @bot.callback_query_handler(lambda call: call.data.startswith('Ответ_'))
                     async def handle_callback(call):
                         global answer
-                        await bot.answer_callback_query(call.id)
-                        if call.data == 'Ответ_Да' or call.data == 'Ответ_Нет':
-                            answer=1
-                            await bot.restrict_chat_member(message.chat.id,message.from_user.id, can_send_messages=True)
-                            role=await bot.get_chat_member(message.chat.id,message.from_user.id)
-                            add_user(message.from_user.id,message.from_user.username,message.chat.id,role)
-                            await bot.delete_message(message.chat.id, mes_test.message_id)
-                            await bot.delete_message(message.chat.id, message.id)
+                        match call.data:
+                            case 'Ответ_Да':
+                                if call.from_user.id==message.from_user.id:
+                                    answer=1
+                                    await bot.restrict_chat_member(message.chat.id,message.from_user.id, can_send_messages=True)
+                                    role=await bot.get_chat_member(message.chat.id,message.from_user.id)
+                                    add_user(message.from_user.id,message.from_user.username,message.chat.id,role)
+                                    await bot.delete_message(message.chat.id, mes_test.message_id)
+                                    await bot.delete_message(message.chat.id, message.id)
+                            case 'Ответ_Нет':
+                                if call.from_user.id==message.from_user.id:
+                                    answer=1
+                                    await bot.restrict_chat_member(message.chat.id,message.from_user.id, can_send_messages=True)
+                                    role=await bot.get_chat_member(message.chat.id,message.from_user.id)
+                                    add_user(message.from_user.id,message.from_user.username,message.chat.id,role)
+                                    await bot.delete_message(message.chat.id, mes_test.message_id)
+                                    await bot.delete_message(message.chat.id, message.id)
                     await asyncio.sleep(10)
                 if answer==0:
                     await bot.delete_message(message.chat.id, mes_test.message_id)
@@ -67,7 +89,8 @@ def coms(bot):
         if inv==None:
             await bot.send_message(message.chat.id,f"Инвентарь:\nНичего нет",reply_to_message_id=message.id)
         else:
-            inv.replace(",","\n")
+            inv=inv.replace(",","\n")
+            inv=inv.replace(":",". Количество: ")
             await bot.send_message(message.chat.id,f"Инвентарь:\n{inv}",reply_to_message_id=message.id)
     @bot.message_handler(regexp="Магазин|Magazin",chat_types=['supergroup','group'])
     async def magazin(message):
@@ -77,5 +100,30 @@ def coms(bot):
         else:
             assort=""
             for i in mag:
-                assort+=f"{i[1]}. Количество: {i[2]}\n"
+                assort+=f"{i[1]}. Количество: {i[2]}/{i[3]}. Цена: {i[4]} монет\n"
             await bot.send_message(message.chat.id,f"Ассортимент магазина:\n{assort}",reply_to_message_id=message.id)
+    @bot.message_handler(regexp="Купить предмет|Buy item",chat_types=['supergroup','group'])
+    async def buy_item(message):
+        item=""
+        for i in message.text.split()[2:-1]:
+            item+=i+""
+        item=item.lower().capitalize()
+        sell_count=search_item(item)
+        match sell_count:
+            case None:
+                await bot.send_message(message.chat.id,f"Данного товара нет в магазине",reply_to_message_id=message.id)
+            case _:
+                count=int(message.text.split()[-1])
+                if count>int(sell_count[2]):
+                    await bot.send_message(message.chat.id,f"Вы не можете купить больше остатка",reply_to_message_id=message.id)
+                elif count==0:
+                    await bot.send_message(message.chat.id,f"Вы не можете купить 0 единиц товара",reply_to_message_id=message.id)
+                else:
+                    money=search_money(message.from_user.id,message.chat.id)
+                    if money>=count*int(sell_count[4]):
+                        minus_money(message.from_user.id,message.chat.id,count*int(sell_count[4]))
+                        minus_item(item,count)
+                        add_item(message.from_user.id,message.chat.id,item,count)
+                        await bot.send_message(message.chat.id,f"Вы успешно купили {item} в количестве {count} за {count*int(sell_count[4])} монет",reply_to_message_id=message.id)
+                    else:
+                        await bot.send_message(message.chat.id,f"У вас недостаточно монет для покупки",reply_to_message_id=message.id)
