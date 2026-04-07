@@ -1,4 +1,3 @@
-from telebot import types
 from datetime import datetime, timedelta
 from boot import *
 def mods(bot):

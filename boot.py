@@ -95,6 +95,15 @@ def search_username(a,b):
     except Exception as e:
         print(f"Ошибка: {e}")
 
+def search_userid(a):
+    try:
+        table=Table("users",MetaData(),autoload_with=engine)
+        resp=select(table).where(table.c.KeyUser==a)
+        with engine.begin() as con:
+            return con.execute(resp).fetchone()[1]
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
 def update_username(a,b):
     try:
         table=Table("users",MetaData(),autoload_with=engine)
@@ -123,7 +132,7 @@ def add_warn(a,b):
         table=Table("users",MetaData(),autoload_with=engine)
         resp=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
         with engine.begin() as con:
-            warns=con.execute(resp).fetchone()[6]+1
+            warns=con.execute(resp).fetchone()[7]+1
             resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(WarnsUser=warns)
             con.execute(resp1)
     except Exception as e:
@@ -151,14 +160,14 @@ def search_money(a,b):
     except Exception as e:
         print(f"Ошибка: {e}")
 
-def minus_money(a,b,c,d):
+def minus_money(a,b,c):
     group=search_group(b)
     money=search_money(a,b)
     try:
         table=Table("users",MetaData(),autoload_with=engine)
-        resp=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(MoneyUser=money-c*d)
+        resp=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(MoneyUser=money-c)
         with engine.begin() as con:
-            write_log(f"Пользователь под id {a} потратил {c*d} монет")
+            write_log(f"Пользователь под id {a} потратил {c} монет")
             return con.execute(resp)
     except Exception as e:
         print(f"Ошибка: {e}")
@@ -169,7 +178,7 @@ def search_warn(a,b):
         table=Table("users",MetaData(),autoload_with=engine)
         resp=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
         with engine.begin() as con:
-            return con.execute(resp).fetchone()[6]
+            return con.execute(resp).fetchone()[7]
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -210,7 +219,7 @@ def search_items(a,b):
         table=Table("users",MetaData(),autoload_with=engine)
         resp=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
         with engine.begin() as con:
-            return con.execute(resp).fetchone()[5]
+            return con.execute(resp).fetchone()[6]
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -220,7 +229,7 @@ def add_item(a,b,c,d):
         table=Table("users",MetaData(),autoload_with=engine)
         resp=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
         with engine.begin() as con:
-            inv=con.execute(resp).fetchone()[5]
+            inv=con.execute(resp).fetchone()[6]
         if inv==None:
             resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(Items=f"{c}:{d},")
             with engine.begin() as con:
@@ -242,7 +251,7 @@ def add_item(a,b,c,d):
                 n_inv=n_inv+str(c)+":"+str(d)+","
             else:
                 None
-            resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(Items=f"{c}:{d},")
+            resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(Items=n_inv)
             with engine.begin() as con:
                 con.execute(resp1)
         write_log(f"В инвентарь пользователя под id {a} добавлен предмет {c} в количестве {d}")
@@ -265,7 +274,7 @@ def minus_item(a,b):
         resp=update(table).where(table.c.NameItem==a).values(CountItem=count-b)
         with engine.begin() as con:
             write_log(f"Из магазина выкуплен {a} в количестве {b}")
-            return con.execute(resp).fetchone()
+            con.execute(resp)
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -299,5 +308,114 @@ def add_read(a,b,c,d,e):
         resp=insert(table).values(Date=e,IdUser=user,GroupUser=group,Type=c,Reason=d)
         with engine.begin() as con:
             con.execute(resp)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def search_guilds(a):
+    try:
+        table=Table("guilds",MetaData(),autoload_with=engine)
+        group=search_group(a)
+        resp=select(table).where(table.c.GroupGuild==group)
+        with engine.begin() as con:
+            return con.execute(resp).fetchall()
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def create_new_guild(a,b,c,d):
+    try:
+        owner=search_user(a,b)
+        group=search_group(b)
+        table=Table("guilds",MetaData(),autoload_with=engine)
+        table1=Table("users",MetaData(),autoload_with=engine)
+        new_guild=insert(table).values(NameGuild=c,TypeGuild=d,GroupGuild=group,Owner=owner,CountMember=1,MaxCount=5)
+        id_guild=search_guild(c,b)
+        with engine.begin() as con:
+            con.execute(new_guild)
+            con.execute(update(table1).where(table1.c.KeyUser==owner).values(GuildUser=id_guild[0]))
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def search_guild(a,b):
+    try:
+        group=search_group(b)
+        table=Table("guilds",MetaData(),autoload_with=engine)
+        guild=select(table).where(table.c.NameGuild==a,table.c.GroupGuild==group)
+        with engine.begin() as con:
+            return con.execute(guild).fetchone()
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def check_user_guild(a,b):
+    try:
+        group=search_group(b)
+        table=Table("users",MetaData(),autoload_with=engine)
+        user=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
+        with engine.begin() as con:
+            return con.execute(user).fetchone()[5]
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def search_owner(a):
+    try:
+        table=Table("guilds",MetaData(),autoload_with=engine)
+        guild=select(table).where(table.c.KeyGuild==a)
+        with engine.begin() as con:
+            return con.execute(guild).fetchone()[4]
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def join_ex_guild(a,b,c):
+    try:
+        group=search_group(b)
+        table=Table("users",MetaData(),autoload_with=engine)
+        table1=Table("guilds",MetaData(),autoload_with=engine)
+        guild=select(table1).where(table1.c.NameGuild==c,table1.c.GroupGuild==group)
+        with engine.begin() as con:
+            info=con.execute(guild).fetchone()
+            con.execute(update(table1).where(table1.c.NameGuild==c,table1.c.GroupGuild==group).values(CountMember=info[5]+1))
+            con.execute(update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(GuildUser=info[0]))
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def leave_ex_guild(a,b,c):
+    try:
+        group=search_group(b)
+        table=Table("users",MetaData(),autoload_with=engine)
+        table1=Table("guilds",MetaData(),autoload_with=engine)
+        guild=select(table1).where(table1.c.KeyGuild==c)
+        with engine.begin() as con:
+            info=con.execute(guild).fetchone()
+            con.execute(update(table1).where(table1.c.NameGuild==c,table1.c.GroupGuild==group).values(CountMember=info[5]-1))
+            con.execute(update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(GuildUser="NULL"))
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def search_info_user(a,b):
+    try:
+        group=search_group(b)
+        table=Table("users",MetaData(),autoload_with=engine)
+        user=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
+        with engine.begin() as con:
+            return con.execute(user).fetchone()
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def search_info_guild(a):
+    try:
+        table=Table("guilds",MetaData(),autoload_with=engine)
+        table1=Table("users",MetaData(),autoload_with=engine)
+        guild=select(table).where(table.c.KeyGuild==a)
+        users=select(table1).where(table1.c.GuildUser==a)
+        with engine.begin() as con:
+            return con.execute(guild).fetchone(),con.execute(users).fetchall()
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def change_rights(a,b):
+    try:
+        table=Table("guilds",MetaData(),autoload_with=engine)
+        guild=update(table).where(table.c.KeyGuild==b).values(Owner=a)
+        with engine.begin() as con:
+            con.execute(guild)
     except Exception as e:
         print(f"Ошибка: {e}")
