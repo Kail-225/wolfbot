@@ -107,7 +107,7 @@ def coms(bot):
         item=""
         for i in message.text.split()[2:-1]:
             item+=i+""
-        item=item.capitalize()
+        item=item.lower().capitalize()
         sell_count=search_item(item)
         match sell_count:
             case None:

@@ -244,11 +244,11 @@ def add_item(a,b,c,d):
                     case _:
                         if c==item[0]:
                             c_count=int(item[1])+d
-                            n_inv=n_inv+item[0]+":"+str(c_count)+","
+                            n_inv+=item[0]+":"+str(c_count)+","
                         else:
-                            n_inv=n_inv+item[0]+":"+item[1]+","
+                            n_inv+=item[0]+":"+item[1]+","
             if re.search(str(c),n_inv)==None:
-                n_inv=n_inv+str(c)+":"+str(d)+","
+                n_inv+=str(c)+":"+str(d)+","
             else:
                 None
             resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(Items=n_inv)
@@ -417,5 +417,73 @@ def change_rights(a,b):
         guild=update(table).where(table.c.KeyGuild==b).values(Owner=a)
         with engine.begin() as con:
             con.execute(guild)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def add_guild_item(a,b,c):
+    try:
+        table=Table("guilds",MetaData(),autoload_with=engine)
+        resp=select(table).where(table.c.KeyGuild==a)
+        with engine.begin() as con:
+            inv=con.execute(resp).fetchone()[-1]
+        if inv==None:
+            resp1=update(table).where(table.c.KeyGuild==a).values(Items=f"{b}:{c},")
+            with engine.begin() as con:
+                con.execute(resp1)
+        else:
+            n_inv=""
+            for i in inv.split(","):
+                item=i.split(":")
+                match len(item[0]):
+                    case 0:
+                        pass
+                    case _:
+                        if b==item[0]:
+                            c_count=int(item[1])+c
+                            n_inv+=n_inv+item[0]+":"+str(c_count)+","
+                        else:
+                            n_inv+=item[0]+":"+item[1]+","
+            if re.search(str(b),n_inv)==None:
+                n_inv+=str(b)+":"+str(c)+","
+            else:
+                pass
+            resp1=update(table).where(table.c.KeyGuild==a).values(Items=n_inv)
+            with engine.begin() as con:
+                con.execute(resp1)
+        write_log(f"В инвентарь гильдии под id {a} добавлен предмет {b} в количестве {c}")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def minus_user_item(a,b,c,d):
+    group=search_group(b)
+    try:
+        table=Table("users",MetaData(),autoload_with=engine)
+        resp=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
+        with engine.begin() as con:
+            inv=con.execute(resp).fetchone()[6]
+        n_inv=""
+        for i in inv.split(","):
+            item=i.split(":")
+            match len(item[0]):
+                case 0:
+                    pass
+                case _:
+                    if c==item[0]:
+                        c_count=int(item[1])-d
+                        match c_count:
+                            case 0:
+                                pass
+                            case _:
+                                n_inv+=item[0]+":"+str(c_count)+","
+                    else:
+                        n_inv+=item[0]+":"+item[1]+","
+            match len(n_inv):
+                case 0:
+                    resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(Items=None)
+                case _:
+                    resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(Items=n_inv)
+            with engine.begin() as con:
+                con.execute(resp1)
+        write_log(f"Из инвентаря пользователя под id {a} взят предмет {c} в количестве {d}")
     except Exception as e:
         print(f"Ошибка: {e}")
