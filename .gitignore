@@ -43,6 +43,9 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+wolf/
+copy/
+test.py
 nosetests.xml
 coverage.xml
 *.cover
