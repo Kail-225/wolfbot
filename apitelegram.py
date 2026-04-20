@@ -3,8 +3,8 @@ from telethon import TelegramClient, events, utils
 from telethon.tl.types import UpdateUserName, PeerChannel
 from boot import *
 from tele import bot
-api_id=21243687
-api_hash="05e89e8ed2ed1fd6013ba0130d7b91a7"
+api_id="Для получения необходимо создать приложение на https://my.telegram.org"
+api_hash="Для получения необходимо создать приложение на https://my.telegram.org"
 token=access()["tg"]
 parser=TelegramClient("parse",api_id,api_hash)
 @parser.on(events.ChatAction)
