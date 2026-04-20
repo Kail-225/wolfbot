@@ -45,10 +45,6 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
-wolf/
-copy/
-test.py
-boot1.py
 *.cover
 *.py,cover
 .hypothesis/
