@@ -244,11 +244,11 @@ def add_item(a,b,c,d):
                     case _:
                         if c==item[0]:
                             c_count=int(item[1])+d
-                            n_inv=n_inv+item[0]+":"+str(c_count)+","
+                            n_inv+=f"{item[0]}:{str(c_count)},"
                         else:
-                            n_inv=n_inv+item[0]+":"+item[1]+","
+                            n_inv+=f"{item[0]}:{item[1]},"
             if re.search(str(c),n_inv)==None:
-                n_inv=n_inv+str(c)+":"+str(d)+","
+                n_inv+=f"{str(c)}:{str(d)},"
             else:
                 None
             resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(Items=n_inv)
@@ -440,11 +440,11 @@ def add_guild_item(a,b,c):
                     case _:
                         if b==item[0]:
                             c_count=int(item[1])+c
-                            n_inv+=n_inv+item[0]+":"+str(c_count)+","
+                            n_inv+=f"{item[0]}:{str(c_count)},"
                         else:
-                            n_inv+=item[0]+":"+item[1]+","
+                            n_inv+=f"{item[0]}:{item[1]},"
             if re.search(str(b),n_inv)==None:
-                n_inv+=str(b)+":"+str(c)+","
+                n_inv+=f"{str(b)}:{str(c)},"
             else:
                 pass
             resp1=update(table).where(table.c.KeyGuild==a).values(Items=n_inv)
@@ -474,9 +474,9 @@ def minus_user_item(a,b,c,d):
                             case 0:
                                 pass
                             case _:
-                                n_inv+=item[0]+":"+str(c_count)+","
+                                n_inv+=f"{item[0]}:{str(c_count)},"
                     else:
-                        n_inv+=item[0]+":"+item[1]+","
+                        n_inv+=f"{item[0]}:{item[1]},"
             match len(n_inv):
                 case 0:
                     resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(Items=None)
