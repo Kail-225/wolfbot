@@ -1,5 +1,6 @@
 from telebot import types
 from boot import *
+from funcs import *
 def guild(bot):
     @bot.message_handler(regexp='Список гильдий|Guilds',chat_types=["supergroup","group"])
     async def list_guilds(message):
@@ -227,3 +228,53 @@ def guild(bot):
                 else:
                     inv=guild[0][7]
         await bot.send_message(message.chat.id,f"Информация о гильдии\nНазвание: {guild[0][1]}\nТип: {guild[0][2]}\nВладелец: {owner}\nУчастники:\n{members}Количество участников: {guild[0][5]}\nМаксимальное количество: {guild[0][6]}\nИнвентарь: {inv}",parse_mode='Markdown',disable_web_page_preview = True,reply_to_message_id=message.id)
+    @bot.message_handler(regexp='Передать предмет гильдии|Transfer item guild',chat_types=["supergroup","group"])
+    async def transfer_item_guild(message):
+        items=check_items(str(message.text.split()[3]).lower())
+        id_guild=check_user_guild(message.from_user.id,message.chat.id)
+        match id_guild:
+            case None:
+                await bot.send_message(message.chat.id,"Вы не можете передавать вещи в гильдию пока не будете в ней состоять",reply_to_message_id=message.id)
+            case _:
+                user_inv=search_items(message.from_user.id,message.chat.id)
+                if user_inv==None:
+                    await bot.send_message(message.chat.id,"Вы не можете передавать вещи которых у вас нет",reply_to_message_id=message.id)
+                else:
+                    user_inv=str(user_inv).lower().split(",")
+                    match re.search(",",items):
+                        case None:
+                            item=items.split(":")
+                            for i in user_inv:
+                                user_item=i.split(":")
+                                if item[0]==user_item[0]:
+                                    if int(item[1])>int(user_item[1]):
+                                        await bot.send_message(message.chat.id,"Вы не можете передавать больше чем у вас есть",reply_to_message_id=message.id)
+                                    else:
+                                        add_guild_item(id_guild,item[0].capitalize(),int(item[1]))
+                                        minus_user_item(message.from_user.id,message.chat.id,item[0].capitalize(),int(item[1]))
+                                        await bot.send_message(message.chat.id,f"Вы передали в гильдию {item[0].capitalize()} в количестве {item[1]}",reply_to_message_id=message.id)
+                        case _:
+                            stop=False
+                            transfer_items=""
+                            items=items.split(",")
+                            for i in items:
+                                item=i.split(":")
+                                for j in user_inv:
+                                    user_item=j.split(":")
+                                    if item[0]==user_item[0]:
+                                        if int(item[1])>int(user_item[1]):
+                                            await bot.send_message(message.chat.id,"Вы не можете передавать больше чем у вас есть",reply_to_message_id=message.id)
+                                            stop=True
+                                            break
+                                        else:
+                                            add_guild_item(id_guild,item[0].capitalize(),int(item[1]))
+                                            minus_user_item(message.from_user.id,message.chat.id,item[0].capitalize(),int(item[1]))
+                                            transfer_items+=f"{item[0].capitalize()} в количестве {item[1]}\n"
+                                match stop:
+                                    case True:
+                                        break
+                            match len(transfer_items):
+                                case 0:
+                                    pass
+                                case _:
+                                    await bot.send_message(message.chat.id,f"Вы передали в гильдию:\n{transfer_items}",reply_to_message_id=message.id)
