@@ -9,7 +9,8 @@ def coms(bot):
         markup = types.InlineKeyboardMarkup()
         btn1 = types.InlineKeyboardButton(text='Наш сайт', url='https://wolfbot.ru')
         btn2 = types.InlineKeyboardButton(text="Добавить бота",url="https://t.me/WoIlFbOt?startgroup=wolfbot&admin=change_info+restrict_members+delete_messages+pin_messages+invite_users")
-        markup.add(btn1,btn2)
+        btn3 = types.InlineKeyboardButton(text="Команды")
+        markup.add(btn1,btn2,btn3)
         sup=support()
         await bot.send_message(message.chat.id,f"Помощь по работе бота wolfbot.\nТехническая поддержка:\n{sup}",reply_markup = markup, parse_mode='Markdown',disable_web_page_preview = True)
     @bot.message_handler(regexp="Кто я|I'm",chat_types=["supergroup","group"])
@@ -32,7 +33,6 @@ def coms(bot):
         for i in info:
             admins_chat+=f"[{i.user.first_name}](https://t.me/{i.user.username})\n"
         await bot.send_message(message.chat.id, f"Список администраторов:\n{admins_chat}",parse_mode='Markdown', reply_to_message_id=message.id, disable_web_page_preview = True)
-    @bot.chat_member_handler()
     @bot.message_handler(content_types=['new_chat_members'])
     async def nu(message):
         name=await bot.get_me()
@@ -80,10 +80,6 @@ def coms(bot):
             else:
                 await bot.ban_chat_member(message.chat.id,message.from_user.id)
                 await bot.delete_message(message.chat.id, message.id)
-    @bot.message_handler(regexp="Варны|Warns",chat_types=['supergroup','group'])
-    async def warns(message):
-        count_warns=search_warn(message.from_user.id,message.chat.id)
-        await bot.send_message(message.chat.id,f"Текущее количество варнов: {count_warns}",reply_to_message_id=message.id)
     @bot.message_handler(regexp="Инвентарь|Items",chat_types=['supergroup','group'])
     async def invent(message):
         inv=search_items(message.from_user.id,message.chat.id)
@@ -189,3 +185,21 @@ def coms(bot):
                             pass
                         case _:
                             await bot.send_message(message.chat.id,f"Вы передали пользователю:\n{transfer_items}",reply_to_message_id=message.id)
+    @bot.message_handler(regexp='Команды|Commands')
+    async def list_commands(message):
+        str1="Список всех команд\n**Основные:**\nКто я(I'm) - информация о пользователе использовавшем данную команду\n"
+        str2="Кто админы(Admins) - выводит список администраторов чата\nИнвентарь(Items) - выводит инвентарь пользователя использовавшего данную команду\n"
+        str3="Магазин(Magazin) - показывает ассортимент магазина\nКупить предмет <название> <количество>(Buy item <название> <количество>) - купить предмет в магазине\n"
+        str4="Передать предмет <юзернейм или ответ на сообщение> <название>:<количество>(Transfer item <юзернейм или ответ на сообщение> <название>:<количество>) - передача предмета(-ов) из инвентаря другому пользователю. Если хотите передать больше одного предмета, то указывайте передаваемые предметы следующим образом: <Название>:<количество>,<Название>:<количество>\n"
+        str5="**Модераторские:**\nВарны <юзернейм или ответ на сообщение>(Warns <юзернейм или ответ на сообщение>) - выводит количество варнов пользователя. Если хотите просмотреть количесто своих варнов, то просто напишите команду без ответа и юзернейма\n"
+        str6="Бан <юзернейм или ответ на сообщение>(Ban <юзернейм или ответ на сообщение>) - забанить пользователя в чате. Для бана по причине спама указывать причину в которой будет использовано слово 'бот'\n"
+        str7="Мут <юзернейм или ответ на сообщение> <время в с/s или м/m или ч/h>(Mute <юзернейм или ответ на сообщение> <время в с/s или м/m или ч/h>) - замутить пользователя на определённое время\n"
+        str8="Варн <юзернейм или ответ на сообщение>(Warn <юзернейм или ответ на сообщение>) - выдать предупреждение пользователю\nИзменить максимум <новое количество>(Change warns <новое количество>) - изменить максимум предупреждений необходимый для бана\n"
+        str9="**Гильдийские:**\nСписок гильдий(Guilds) - показывает список гильдий созданных в группе\nПрисоединиться к гильдии <название> (Join the guild <название>) - присоединиться к гильдии\n"
+        str10="Пригласить в гильдию <юзернейм или ответ на сообщение>(Invite in guild <юзернейм или ответ на сообщение>) - пригласить участника чата в гильдию. Доступно владельцу гильдии\n"
+        str11="Создать гильдию <название> <тип гильдии>(Create Guild <название> <тип гильдии>) - создать гильдию в группе. Доступны типы: закрытый, открытый, заявки\n"
+        str12="Покинуть гильдию(Leave guild) - выйти из гильдии\nПередать права гильдии <юзернейм или ответ на сообщение>(Transfer rights guild <юзернейм или ответ на сообщение>) - передать права участнику гильдии. Доступно владельцу гильдии\n"
+        str13="Моя гильдия(My Guild) - выводит информацию о гильдии в которой состоит пользователь\nПередать предмет гильдии <название>:<количество>(Transfer item guild <название>:<количество>) - передача предмета(-ов) в гильдию. Если хотите передать больше одного предмета, то указывайте передаваемые предметы следующим образом: <Название>:<количество>,<Название>:<количество>\n"
+        str14="*Список команд будет пополняться*"
+        text=str1+str2+str3+str4+str5+str6+str7+str8+str9+str10+str11+str12+str13+str14
+        await bot.send_message(message.chat.id,text,parse_mode="Markdown",reply_to_message_id=message.id)
