@@ -1,6 +1,44 @@
 from datetime import datetime, timedelta
 from boot import *
 def mods(bot):
+    @bot.message_handler(regexp="Варны|Warns",chat_types=['supergroup','group'])
+    async def warns(message):
+        match message.reply_to_message:
+            case None:
+                if len(message.text.strip().split(" "))==1:
+                    count_warns=search_warn(message.from_user.id,message.chat.id)
+                    await bot.send_message(message.chat.id,f"Текущее количество варнов: {count_warns}",reply_to_message_id=message.id)
+                elif len(message.text.strip().split(" "))==2:
+                    status_author=await bot.get_chat_member(message.chat.id,message.from_user.id)
+                    match status_author.status:
+                        case "administrator":
+                            user=search_username(message.text.split(" ")[1][1::],message.chat.id)
+                            count_warns=search_warn(user,message.chat.id)
+                            await bot.send_message(message.chat.id,f"Текущее количество варнов пользователя: {count_warns}",reply_to_message_id=message.id)
+                        case "creator":
+                            user=search_username(message.text.split(" ")[1][1::],message.chat.id)
+                            count_warns=search_warn(user,message.chat.id)
+                            await bot.send_message(message.chat.id,f"Текущее количество варнов пользователя: {count_warns}",reply_to_message_id=message.id)
+                        case "left":
+                            user=search_username(message.text.split(" ")[1][1::],message.chat.id)
+                            count_warns=search_warn(user,message.chat.id)
+                            await bot.send_message(message.chat.id,f"Текущее количество варнов пользователя: {count_warns}",reply_to_message_id=message.id)
+                        case _:
+                            await bot.send_message(message.chat.id,"Вы не можете просматривать чужие варны не являясь модератором",reply_to_message_id=message.id)
+            case _:
+                status_author=await bot.get_chat_member(message.chat.id,message.from_user.id)
+                match status_author.status:
+                    case "administrator":
+                        count_warns=search_warn(message.reply_to_message.from_user.id,message.chat.id)
+                        await bot.send_message(message.chat.id,f"Текущее количество варнов пользователя: {count_warns}",reply_to_message_id=message.id)
+                    case "creator":
+                        count_warns=search_warn(message.reply_to_message.from_user.id,message.chat.id)
+                        await bot.send_message(message.chat.id,f"Текущее количество варнов пользователя: {count_warns}",reply_to_message_id=message.id)
+                    case "left":
+                        count_warns=search_warn(message.reply_to_message.from_user.id,message.chat.id)
+                        await bot.send_message(message.chat.id,f"Текущее количество варнов пользователя: {count_warns}",reply_to_message_id=message.id)
+                    case _:
+                        await bot.send_message(message.chat.id,"Вы не можете просматривать чужие варны не являясь модератором",reply_to_message_id=message.id)
     @bot.message_handler(regexp='Бан|Ban',chat_types=["supergroup","group"])
     async def ban(message):
         admin=await bot.get_chat_member(message.chat.id,message.from_user.id)
