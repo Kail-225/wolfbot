@@ -1,6 +1,6 @@
 import json,re,locale
 from datetime import datetime
-from sqlalchemy import create_engine, insert, select, update, Table, MetaData
+from sqlalchemy import create_engine, insert, select, update, text, delete, Table, MetaData
 locale.setlocale(locale.LC_ALL, 'ru_RU.utf8')
 #Необязательная функция. Если вы не будете выкладывать токен в общий доступ, то можете прописывать токен сразу в AsyncTelebot
 def access():
@@ -72,16 +72,6 @@ def add_user(a,b,c,d):
         with engine.begin() as con:
             if con.execute(resp).fetchone()==None:
                 con.execute(resp1)
-    except Exception as e:
-        print(f"Ошибка: {e}")
-
-def search_user(a,b):
-    group=search_group(b)
-    try:
-        table=Table("users",MetaData(),autoload_with=engine)
-        resp=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
-        with engine.begin() as con:
-            return con.execute(resp).fetchone()[0]
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -201,15 +191,15 @@ def change_warn_group(a,b):
         print(f"Ошибка: {e}")
 
 def support():
-    sup=""
+    sup_id=[]
     try:
         table=Table("support",MetaData(),autoload_with=engine)
         resp=select(table)
         with engine.begin() as con:
             com=con.execute(resp).fetchall()
         for i in com:
-            sup+=f"[{i[1]}](https://t.me/{i[2]})\n"
-        return sup
+            sup_id.append(i[1])
+        return sup_id
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -304,7 +294,7 @@ def add_read(a,b,c,d,e):
     try:
         table=Table("journal",MetaData(),autoload_with=engine)
         group=search_group(b)
-        user=search_user(a,b)
+        user=search_info_user(a,b)[0]
         resp=insert(table).values(Date=e,IdUser=user,GroupUser=group,Type=c,Reason=d)
         with engine.begin() as con:
             con.execute(resp)
@@ -323,7 +313,7 @@ def search_guilds(a):
 
 def create_new_guild(a,b,c,d):
     try:
-        owner=search_user(a,b)
+        owner=search_info_user(a,b)[0]
         group=search_group(b)
         table=Table("guilds",MetaData(),autoload_with=engine)
         table1=Table("users",MetaData(),autoload_with=engine)
@@ -485,5 +475,21 @@ def minus_user_item(a,b,c,d):
             with engine.begin() as con:
                 con.execute(resp1)
         write_log(f"Из инвентаря пользователя под id {a} взят предмет {c} в количестве {d}")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def delete_guild(a):
+    try:
+        resp=text("SELECT COUNT(KeyGuild) FROM guilds")
+        table=Table("guilds",MetaData(),autoload_with=engine)
+        table1=Table("users",MetaData(),autoload_with=engine)
+        resp1=delete(table).where(table.c.KeyGuild==a)
+        resp2=update(table1).where(table1.c.GuildUser==a).values(GuildUser=None)
+        with engine.begin() as con:
+            con.execute(resp2)
+            con.execute(resp1)
+            res=con.execute(resp).fetchone()[0]
+            resp3=text(f"ALTER TABLE guilds AUTO_INCREMENT={res+1}")
+            con.execute(resp3)
     except Exception as e:
         print(f"Ошибка: {e}")

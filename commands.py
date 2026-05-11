@@ -11,27 +11,45 @@ def coms(bot):
         btn2 = types.InlineKeyboardButton(text="Добавить бота",url="https://t.me/WoIlFbOt?startgroup=wolfbot&admin=change_info+restrict_members+delete_messages+pin_messages+invite_users")
         btn3 = types.InlineKeyboardButton(text="Команды")
         markup.add(btn1,btn2,btn3)
-        sup=support()
-        await bot.send_message(message.chat.id,f"Помощь по работе бота wolfbot.\nТехническая поддержка:\n{sup}",reply_markup = markup, parse_mode='Markdown',disable_web_page_preview = True)
+        sup=""
+        for i in support():
+            info=await bot.get_chat(i)
+            if info.username==None:
+                sup+=f"{info.first_name}\n"
+            else:
+                sup+=f"[{info.first_name}](https://t.me/{info.username})\n"
+        await bot.send_message(message.chat.id,f"Помощь по работе бота wolfbot.\nТехническая поддержка:\n{sup}",reply_markup=markup, parse_mode='Markdown',disable_web_page_preview = True)
+        @bot.callback_query_handler(lambda call: call.data.startswith('Команды'))
+        async def handle_callback(call):
+            match call.data:
+                case "Команды":
+                    await list_commands(message)
     @bot.message_handler(regexp="Кто я|I'm",chat_types=["supergroup","group"])
     async def info_user(message):
-        info=search_info_user(message.from_user.id,message.chat.id)
-        if info[5]==None:
-            guild="Не состоит"
-        else:
-            guild=search_info_guild(info[5])[0][1]
-        status=await bot.get_chat_member(message.chat.id,message.from_user.id)
-        if info[6]==None:
-            inv="Пусто"
-        else:
-            inv=info[6]
-        await bot.send_message(message.chat.id, f"Информация о пользователе {status.user.first_name}\nСтатус: {status.status}\nМонеты: {info[4]}\nКоличество предупреждений: {info[7]}\nГильдия: {guild}\nИнвентарь: {inv}",reply_to_message_id=message.id)
+        match message.from_user.is_bot:
+            case True:
+                pass
+            case False:
+                info=search_info_user(message.from_user.id,message.chat.id)
+                if info[5]==None:
+                    guild="Не состоит"
+                else:
+                    guild=search_info_guild(info[5])[0][1]
+                status=await bot.get_chat_member(message.chat.id,message.from_user.id)
+                if info[6]==None:
+                    inv="Пусто"
+                else:
+                    inv=info[6]
+                await bot.send_message(message.chat.id, f"Информация о пользователе {status.user.first_name}\nСтатус: {status.status}\nМонеты: {info[4]}\nКоличество предупреждений: {info[7]}\nГильдия: {guild}\nИнвентарь: {inv}",reply_to_message_id=message.id)
     @bot.message_handler(regexp='Кто админы|Admins',chat_types=["supergroup","group"])
     async def admins(message):
         admins_chat=""
         info=await bot.get_chat_administrators(message.chat.id)
         for i in info:
-            admins_chat+=f"[{i.user.first_name}](https://t.me/{i.user.username})\n"
+            if i.user.username==None:
+                admins_chat+=f"{i.user.first_name}\n"
+            else:
+                admins_chat+=f"[{i.user.first_name}](https://t.me/{i.user.username})\n"
         await bot.send_message(message.chat.id, f"Список администраторов:\n{admins_chat}",parse_mode='Markdown', reply_to_message_id=message.id, disable_web_page_preview = True)
     @bot.message_handler(content_types=['new_chat_members'])
     async def nu(message):
@@ -82,109 +100,125 @@ def coms(bot):
                 await bot.delete_message(message.chat.id, message.id)
     @bot.message_handler(regexp="Инвентарь|Items",chat_types=['supergroup','group'])
     async def invent(message):
-        inv=search_items(message.from_user.id,message.chat.id)
-        if inv==None:
-            await bot.send_message(message.chat.id,f"Инвентарь:\nНичего нет",reply_to_message_id=message.id)
-        else:
-            inv=inv.replace(",","\n")
-            inv=inv.replace(":",". Количество: ")
-            await bot.send_message(message.chat.id,f"Инвентарь:\n{inv}",reply_to_message_id=message.id)
+        match message.from_user.is_bot:
+            case True:
+                pass
+            case False:
+                inv=search_items(message.from_user.id,message.chat.id)
+                if inv==None:
+                    await bot.send_message(message.chat.id,f"Инвентарь:\nНичего нет",reply_to_message_id=message.id)
+                else:
+                    inv=inv.replace(",","\n")
+                    inv=inv.replace(":",". Количество: ")
+                    await bot.send_message(message.chat.id,f"Инвентарь:\n{inv}",reply_to_message_id=message.id)
     @bot.message_handler(regexp="Магазин|Magazin",chat_types=['supergroup','group'])
     async def magazin(message):
-        mag=search_magazin()
-        if mag==None or str(mag)=="[]":
-            await bot.send_message(message.chat.id,f"Ассортимент магазина:\nВсё разобрали",reply_to_message_id=message.id)
-        else:
-            assort=""
-            for i in mag:
-                assort+=f"{i[1]}. Количество: {i[2]}/{i[3]}. Цена: {i[4]} монет\n"
-            await bot.send_message(message.chat.id,f"Ассортимент магазина:\n{assort}",reply_to_message_id=message.id)
+        match message.from_user.is_bot:
+            case True:
+                pass
+            case False:
+                mag=search_magazin()
+                if mag==None or str(mag)=="[]":
+                    await bot.send_message(message.chat.id,f"Ассортимент магазина:\nВсё разобрали",reply_to_message_id=message.id)
+                else:
+                    assort=""
+                    for i in mag:
+                        assort+=f"{i[1]}. Количество: {i[2]}/{i[3]}. Цена: {i[4]} монет\n"
+                    await bot.send_message(message.chat.id,f"Ассортимент магазина:\n{assort}",reply_to_message_id=message.id)
     @bot.message_handler(regexp="Купить предмет|Buy item",chat_types=['supergroup','group'])
     async def buy_item(message):
-        item=""
-        for i in message.text.split()[2:-1]:
-            item+=i+""
-        item=item.capitalize()
-        sell_count=search_item(item)
-        match sell_count:
-            case None:
-                await bot.send_message(message.chat.id,f"Данного товара нет в магазине",reply_to_message_id=message.id)
-            case _:
-                count=int(message.text.split()[-1])
-                if count>int(sell_count[2]):
-                    await bot.send_message(message.chat.id,f"Вы не можете купить больше остатка",reply_to_message_id=message.id)
-                elif count==0:
-                    await bot.send_message(message.chat.id,f"Вы не можете купить 0 единиц товара",reply_to_message_id=message.id)
-                else:
-                    money=search_money(message.from_user.id,message.chat.id)
-                    if money>=count*int(sell_count[4]):
-                        minus_money(message.from_user.id,message.chat.id,count*int(sell_count[4]))
-                        minus_item(item,count)
-                        add_item(message.from_user.id,message.chat.id,item,count)
-                        await bot.send_message(message.chat.id,f"Вы успешно купили {item} в количестве {count} за {count*int(sell_count[4])} монет",reply_to_message_id=message.id)
-                    else:
-                        await bot.send_message(message.chat.id,f"У вас недостаточно монет для покупки",reply_to_message_id=message.id)
+        match message.from_user.is_bot:
+            case True:
+                pass
+            case False:
+                item=""
+                for i in message.text.split()[2:-1]:
+                    item+=i+""
+                item=item.capitalize()
+                sell_count=search_item(item)
+                match sell_count:
+                    case None:
+                        await bot.send_message(message.chat.id,f"Данного товара нет в магазине",reply_to_message_id=message.id)
+                    case _:
+                        count=int(message.text.split()[-1])
+                        if count>int(sell_count[2]):
+                            await bot.send_message(message.chat.id,f"Вы не можете купить больше остатка",reply_to_message_id=message.id)
+                        elif count==0:
+                            await bot.send_message(message.chat.id,f"Вы не можете купить 0 единиц товара",reply_to_message_id=message.id)
+                        else:
+                            money=search_money(message.from_user.id,message.chat.id)
+                            if money>=count*int(sell_count[4]):
+                                minus_money(message.from_user.id,message.chat.id,count*int(sell_count[4]))
+                                minus_item(item,count)
+                                add_item(message.from_user.id,message.chat.id,item,count)
+                                await bot.send_message(message.chat.id,f"Вы успешно купили {item} в количестве {count} за {count*int(sell_count[4])} монет",reply_to_message_id=message.id)
+                            else:
+                                await bot.send_message(message.chat.id,f"У вас недостаточно монет для покупки",reply_to_message_id=message.id)
     @bot.message_handler(regexp='Передать предмет|Transfer item',chat_types=["supergroup","group"])
     async def transfer_item(message):
-        match message.reply_to_message:
-            case None:
-                items=check_items(str(message.text.split()[3]).lower())
-                user=search_username(message.text.split()[2][1::],message.chat.id)
-            case _:
-                items=check_items(str(message.text.split()[2]).lower())
-                user=message.reply_to_message.from_user.id
-        user_inv=search_items(message.from_user.id,message.chat.id)
-        if user_inv==None:
-            await bot.send_message(message.chat.id,"Вы не можете передавать вещи которых у вас нет",reply_to_message_id=message.id)
-        else:
-            user_inv=str(user_inv).lower().split(",")
-            match re.search(",",items):
-                case None:
-                    item=items.split(":")
-                    match re.search(item[0],user_inv):
+        match message.from_user.is_bot:
+            case True:
+                pass
+            case False:
+                match message.reply_to_message:
+                    case None:
+                        items=check_items(str(message.text.split()[3]).lower())
+                        user=search_username(message.text.split()[2][1::],message.chat.id)
+                    case _:
+                        items=check_items(str(message.text.split()[2]).lower())
+                        user=message.reply_to_message.from_user.id
+                user_inv=search_items(message.from_user.id,message.chat.id)
+                if user_inv==None:
+                    await bot.send_message(message.chat.id,"Вы не можете передавать вещи которых у вас нет",reply_to_message_id=message.id)
+                else:
+                    user_inv=str(user_inv).lower().split(",")
+                    match re.search(",",items):
                         case None:
-                            await bot.send_message(message.chat.id,f"У вас в инвентаре нет {item[0].capitalize()}",reply_to_message_id=message.id)
-                        case _:
-                            for i in user_inv:
-                                user_item=i.split(":")
-                                if item[0]==user_item[0]:
-                                    if int(item[1])>int(user_item[1]):
-                                        await bot.send_message(message.chat.id,"Вы не можете передавать больше чем у вас есть",reply_to_message_id=message.id)
-                                    else:
-                                        add_item(user,message.chat.id,item[0].capitalize(),int(item[1]))
-                                        minus_user_item(message.from_user.id,message.chat.id,item[0].capitalize(),int(item[1]))
-                                        await bot.send_message(message.chat.id,f"Вы передали пользователю {item[0].capitalize()} в количестве {item[1]}",reply_to_message_id=message.id)
-                case _:
-                    stop=False
-                    transfer_items=""
-                    items=items.split(",")
-                    for i in items:
-                        item=i.split(":")
-                        for j in user_inv:
-                            user_item=j.split(":")
+                            item=items.split(":")
                             match re.search(item[0],user_inv):
                                 case None:
                                     await bot.send_message(message.chat.id,f"У вас в инвентаре нет {item[0].capitalize()}",reply_to_message_id=message.id)
-                                    stop=True
-                                    break
                                 case _:
-                                    if item[0]==user_item[0]:
-                                        if int(item[1])>int(user_item[1]):
-                                            await bot.send_message(message.chat.id,"Вы не можете передавать больше чем у вас есть",reply_to_message_id=message.id)
+                                    for i in user_inv:
+                                        user_item=i.split(":")
+                                        if item[0]==user_item[0]:
+                                            if int(item[1])>int(user_item[1]):
+                                                await bot.send_message(message.chat.id,"Вы не можете передавать больше чем у вас есть",reply_to_message_id=message.id)
+                                            else:
+                                                add_item(user,message.chat.id,item[0].capitalize(),int(item[1]))
+                                                minus_user_item(message.from_user.id,message.chat.id,item[0].capitalize(),int(item[1]))
+                                                await bot.send_message(message.chat.id,f"Вы передали пользователю {item[0].capitalize()} в количестве {item[1]}",reply_to_message_id=message.id)
+                        case _:
+                            stop=False
+                            transfer_items=""
+                            items=items.split(",")
+                            for i in items:
+                                item=i.split(":")
+                                for j in user_inv:
+                                    user_item=j.split(":")
+                                    match re.search(item[0],user_inv):
+                                        case None:
+                                            await bot.send_message(message.chat.id,f"У вас в инвентаре нет {item[0].capitalize()}",reply_to_message_id=message.id)
                                             stop=True
                                             break
-                                        else:
-                                            add_item(user,message.chat.id,item[0].capitalize(),int(item[1]))
-                                            minus_user_item(message.from_user.id,message.chat.id,item[0].capitalize(),int(item[1]))
-                                            transfer_items+=f"{item[0].capitalize()} в количестве {item[1]}\n"
-                        match stop:
-                            case True:
-                                break
-                    match len(transfer_items):
-                        case 0:
-                            pass
-                        case _:
-                            await bot.send_message(message.chat.id,f"Вы передали пользователю:\n{transfer_items}",reply_to_message_id=message.id)
+                                        case _:
+                                            if item[0]==user_item[0]:
+                                                if int(item[1])>int(user_item[1]):
+                                                    await bot.send_message(message.chat.id,"Вы не можете передавать больше чем у вас есть",reply_to_message_id=message.id)
+                                                    stop=True
+                                                    break
+                                                else:
+                                                    add_item(user,message.chat.id,item[0].capitalize(),int(item[1]))
+                                                    minus_user_item(message.from_user.id,message.chat.id,item[0].capitalize(),int(item[1]))
+                                                    transfer_items+=f"{item[0].capitalize()} в количестве {item[1]}\n"
+                                match stop:
+                                    case True:
+                                        break
+                            match len(transfer_items):
+                                case 0:
+                                    pass
+                                case _:
+                                    await bot.send_message(message.chat.id,f"Вы передали пользователю:\n{transfer_items}",reply_to_message_id=message.id)
     @bot.message_handler(regexp='Команды|Commands')
     async def list_commands(message):
         str1="Список всех команд\n**Основные:**\nКто я(I'm) - информация о пользователе использовавшем данную команду\n"

@@ -6,8 +6,12 @@ def mods(bot):
         match message.reply_to_message:
             case None:
                 if len(message.text.strip().split(" "))==1:
-                    count_warns=search_warn(message.from_user.id,message.chat.id)
-                    await bot.send_message(message.chat.id,f"Текущее количество варнов: {count_warns}",reply_to_message_id=message.id)
+                    match message.from_user.is_bot:
+                        case True:
+                            pass
+                        case False:
+                            count_warns=search_warn(message.from_user.id,message.chat.id)
+                            await bot.send_message(message.chat.id,f"Текущее количество варнов: {count_warns}",reply_to_message_id=message.id)
                 elif len(message.text.strip().split(" "))==2:
                     status_author=await bot.get_chat_member(message.chat.id,message.from_user.id)
                     match status_author.status:
@@ -585,9 +589,9 @@ def mods(bot):
                                     add_read(user,message.chat.id,"Предупреждение","Не указана",datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                                     await bot.send_message(message.chat.id, f"Пользователь [{status_user.user.first_name}](https://t.me/{status_user.user.username}) получил предупреждение\nИнициатор: [{message.from_user.first_name}](https://t.me/{message.from_user.username})", parse_mode="Markdown", reply_to_message_id=message.id, disable_web_page_preview = True)
                 else:
-                    user=search_username(message.split()[1][1::],message.chat.id)
+                    user=search_username(message.text.split()[1][1::],message.chat.id)
                     status_user=await bot.get_chat_member(message.chat.id,user)
-                    match status_user:
+                    match status_user.status:
                         case "administrator":
                             await bot.send_message(message.chat.id, "Вы не можете выдать предупреждение другому администратору или самому себе", reply_to_message_id=message.id)
                         case "creator":

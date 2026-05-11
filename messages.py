@@ -2,5 +2,13 @@ from boot import add_money
 def messages(bot):
     @bot.message_handler(chat_types=['supergroup','group'])
     async def mes(message):
-        if message.text[0:7]!="/start@":
-            add_money(message.from_user.id,message.chat.id)
+        match message.content_type:
+            case "text":
+                if message.text[0:7]=="/start@":
+                    pass
+                elif message.from_user.first_name=="Telegram":
+                    pass
+                elif message.from_user.is_bot==True:
+                    pass
+                else:
+                    add_money(message.from_user.id,message.chat.id)
