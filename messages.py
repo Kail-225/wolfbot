@@ -11,4 +11,4 @@ def messages(bot):
                 elif message.from_user.is_bot==True:
                     pass
                 else:
-                    add_money(message.from_user.id,message.chat.id)
+                    add_money(message.from_user.id,message.chat.id,5)

@@ -65,10 +65,13 @@ def add_filter(a,b,c):
 
 def add_user(a,b,c,d):
     group=search_group(c)
+    vip=search_vip(a)
+    if vip==None:
+        vip=0
     try:
         table=Table("users",MetaData(),autoload_with=engine)
         resp=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
-        resp1=insert(table).values(IdUser=a,NameUser=b,GroupUser=group,MoneyUser=0,WarnsUser=0,StatusUser=d)
+        resp1=insert(table).values(IdUser=a,NameUser=b,GroupUser=group,MoneyUser=0,WarnsUser=0,StatusUser=d,VIP=vip)
         with engine.begin() as con:
             if con.execute(resp).fetchone()==None:
                 con.execute(resp1)
@@ -120,23 +123,22 @@ def add_warn(a,b):
     group=search_group(b)
     try:
         table=Table("users",MetaData(),autoload_with=engine)
-        resp=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
+        resp=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(WarnsUser=table.c.WarnsUser+1)
         with engine.begin() as con:
-            warns=con.execute(resp).fetchone()[7]+1
-            resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(WarnsUser=warns)
-            con.execute(resp1)
+            con.execute(resp)
     except Exception as e:
         print(f"Ошибка: {e}")
 
-def add_money(a,b):
-    group=search_group(b)
+def add_money(a,b,c):
+    if b[0]!="-":
+        group=b
+    else:
+        group=search_group(b)
     try:
         table=Table("users",MetaData(),autoload_with=engine)
-        resp=select(table).where(table.c.IdUser==a,table.c.GroupUser==group)
+        resp=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(MoneyUser=table.c.MoneyUser+c)
         with engine.begin() as con:
-            money=con.execute(resp).fetchone()[4]+5
-            resp1=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(MoneyUser=money)
-            con.execute(resp1)
+            con.execute(resp)
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -187,6 +189,19 @@ def change_warn_group(a,b):
         resp=update(table).where(table.c.IdGroup==a).values(Warns=b)
         with engine.begin() as con:
             con.execute(resp)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def search_vip(a):
+    try:
+        table=Table("users",MetaData(),autoload_with=engine)
+        resp=select(table).where(table.c.IdUser==a,table.c.VIP>0)
+        with engine.begin() as con:
+            res=con.execute(resp).fetchone()
+        if res==None:
+            return None
+        else:
+            return res[-1]
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -282,7 +297,7 @@ def update_magazin():
         table=Table("magazin",MetaData(),autoload_with=engine)
         resp=select(table)
         with engine.begin() as con:
-            mag=con.execute(resp)
+            mag=con.execute(resp).fetchall()
             for i in mag:
                 resp1=update(table).where(table.c.NameItem==i[1]).values(CountItem=i[3])
                 con.execute(resp1)
@@ -491,5 +506,103 @@ def delete_guild(a):
             res=con.execute(resp).fetchone()[0]
             resp3=text(f"ALTER TABLE guilds AUTO_INCREMENT={res+1}")
             con.execute(resp3)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def settings_group_rules(a,b):
+    try:
+        table=Table("groups",MetaData(),autoload_with=engine)
+        resp=update(table).where(table.c.IdGroup==a).values(Rules=b)
+        with engine.begin() as con:
+            con.execute(resp)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def group_rules(a):
+    try:
+        table=Table("groups",MetaData(),autoload_with=engine)
+        resp=select(table).where(table.c.IdGroup==a)
+        with engine.begin() as con:
+            return con.execute(resp).fetchone()[-1]
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def update_vip(a,b):
+    match a:
+        case None:
+            try:
+                table=Table("users",MetaData(),autoload_with=engine)
+                resp=update(table).where(table.c.VIP>0).values(VIP=table.c.VIP-1)
+                with engine.begin() as con:
+                    con.execute(resp)
+            except Exception as e:
+                print(f"Ошибка: {e}")
+        case _:
+            try:
+                table=Table("users",MetaData(),autoload_with=engine)
+                resp=update(table).where(table.c.IdUser==a).values(VIP=table.c.VIP+b)
+                with engine.begin() as con:
+                    con.execute(resp)
+            except Exception as e:
+                print(f"Ошибка: {e}")
+
+def search_guid(a):
+    groups=""
+    try:
+        table=Table("users",MetaData(),autoload_with=engine)
+        table1=Table("groups",MetaData(),autoload_with=engine)
+        resp=select(table).where(table.c.IdUser==a)
+        with engine.begin() as con:
+            id_groups=con.execute(resp).fetchall()
+            for i in id_groups:
+                resp1=select(table1).where(table1.c.KeyGroup==i[3])
+                name=con.execute(resp1).fetchone()
+                groups+=str(i[3])+" - "+str(name[2])+"\n"
+        return groups
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def search_promocode(a):
+    try:
+        table=Table("promocodes",MetaData(),autoload_with=engine)
+        resp=select(table).where(table.c.Promo==a,table.c.StatusPromo!="Использован")
+        resp1=update(table).where(table.c.Promo==a).values(StatusPromo="Использован")
+        with engine.begin() as con:
+            reward=con.execute(resp).fetchone()
+            if reward==None:
+                return None
+            else:
+                reward=reward[-2]
+                con.execute(resp1)
+        match re.search(",",reward):
+            case None:
+                reward_split=reward.split(" ")
+                if reward_split[0]=="VIP-статус":
+                    match reward_split[1]:
+                        case "полтора":
+                            return [reward,False,15]
+                        case _:
+                            if reward_split[2][0]=="д":
+                                return [reward,False,int(reward_split[1])]
+                            else:
+                                return [reward,False,int(reward_split[1])*30]
+                else:
+                    return [reward,True,int(reward_split[0])]
+            case _:
+                rewards=[]
+                for i in reward.split(","):
+                    reward_split=i.split(" ")
+                    if reward_split[0]=="VIP-статус":
+                        match reward_split[1]:
+                            case "полтора":
+                                rewards.append([i,False,15])
+                            case _:
+                                if reward_split[2][0]=="д":
+                                    rewards.append([i,False,int(reward_split[1])])
+                                else:
+                                    rewards.append([i,False,int(reward_split[1])*30])
+                    else:
+                        rewards.append([i,True,int(reward_split[0])])
+                return rewards
     except Exception as e:
         print(f"Ошибка: {e}")

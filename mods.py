@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from boot import *
+from funcs import *
 def mods(bot):
     @bot.message_handler(regexp="Варны|Warns",chat_types=['supergroup','group'])
     async def warns(message):
@@ -633,3 +634,129 @@ def mods(bot):
                 await bot.send_message(message.chat.id, f"Количество варнов для бана изменено до {message.text.split()[2]}", reply_to_message_id=message.id)
             case _:
                 await bot.send_message(message.chat.id, "Данная команда доступна только администрации и модерации", reply_to_message_id=message.id)
+    @bot.message_handler(regexp='Задать правила|Settings Rules',chat_types=['supergroup','group'])
+    async def settings_rules(message):
+        if message.from_user.first_name=="Telegram":
+            pass
+        else:
+            role=await bot.get_chat_member()
+            match role.status:
+                case "":
+                    rules=""
+                    for i in message.text.split("\n")[1::]:
+                        rules+=i+"  "
+                    rules=rules.strip().replace("  ","|")
+                    settings_group_rules(message.chat.id,rules)
+                    await bot.send_message(message.chat.id,"Правила чата заданы",reply_to_message_id=message.id)
+                case "":
+                    rules=""
+                    for i in message.text.split("\n")[1::]:
+                        rules+=i+"  "
+                    rules=rules.strip().replace("  ","|")
+                    settings_group_rules(message.chat.id,rules)
+                    await bot.send_message(message.chat.id,"Правила чата заданы",reply_to_message_id=message.id)
+                case "":
+                    rules=""
+                    for i in message.text.split("\n")[1::]:
+                        rules+=i+"  "
+                    rules=rules.strip().replace("  ","|")
+                    settings_group_rules(message.chat.id,rules)
+                    await bot.send_message(message.chat.id,"Правила чата заданы",reply_to_message_id=message.id)
+                case _:
+                    await bot.send_message(message.chat.id,"Вы не можете задавать правила чата не являясь модератором",reply_to_message_id=message.id)
+    @bot.message_handler(regexp='Добавить правило|Add Rule',chat_types=['supergroup','group'])
+    async def add_rule(message):
+        if message.from_user.first_name=="Telegram":
+            pass
+        else:
+            role=await bot.get_chat_member(message.chat.id,message.from_user.id)
+            match role.status:
+                case "administrator":
+                    rules=group_rules(message.chat.id)
+                    new_rules=message.text.split("  ")[2]
+                    if re.search(",",new_rules)==None:
+                        new_rules1=add_rule_in_list(rules,new_rules)
+                    else:
+                        new_rules2=rules
+                        for i in new_rules.split(","):
+                            new_rules1=add_rule_in_list(new_rules2,i)
+                            new_rules2=new_rules1
+                    settings_group_rules(message.chat.id,new_rules1)
+                    await bot.send_message(message.chat.id,"Правило чата добавлено",reply_to_message_id=message.id)
+                case "creator":
+                    rules=group_rules(message.chat.id)
+                    new_rules=message.text.split("  ")[2]
+                    if re.search(",",new_rules)==None:
+                        new_rules1=add_rule_in_list(rules,new_rules)
+                    else:
+                        new_rules2=rules
+                        for i in new_rules.split(","):
+                            new_rules1=add_rule_in_list(new_rules2,i)
+                            new_rules2=new_rules1
+                    settings_group_rules(message.chat.id,new_rules1)
+                    await bot.send_message(message.chat.id,"Правило чата добавлено",reply_to_message_id=message.id)
+                case "left":
+                    rules=group_rules(message.chat.id)
+                    new_rules=message.text.split("  ")[2]
+                    if re.search(",",new_rules)==None:
+                        new_rules1=add_rule_in_list(rules,new_rules)
+                    else:
+                        new_rules2=rules
+                        for i in new_rules.split(","):
+                            new_rules1=add_rule_in_list(new_rules2,i)
+                            new_rules2=new_rules1
+                    settings_group_rules(message.chat.id,new_rules1)
+                    await bot.send_message(message.chat.id,"Правило чата добавлено",reply_to_message_id=message.id)
+                case _:
+                    await bot.send_message(message.chat.id,"Вы не можете добавлять правило не являясь модератором",reply_to_message_id=message.id)
+    @bot.message_handler(regexp='Удалить правило|Remove Rule',chat_types=['supergroup','group'])
+    async def remove_rule(message):
+        if message.from_user.first_name=="Telegram":
+            pass
+        else:
+            role=await bot.get_chat_member(message.chat.id,message.from_user.id)
+            match role.status:
+                case "administrator":
+                    rules=group_rules(message.chat.id)
+                    new_rules=message.text.split(" ")[2]
+                    if re.search(",",new_rules)==None:
+                        new_rules1=remove_rule_in_list(rules,new_rules)
+                    else:
+                        ind=0
+                        new_rules2=rules
+                        for i in new_rules.split(","):
+                            new_rules1=remove_rule_in_list(new_rules2,int(i)-ind)
+                            new_rules2=new_rules1
+                            ind+=1
+                    settings_group_rules(message.chat.id,new_rules1)
+                    await bot.send_message(message.chat.id,"Правило чата удалено",reply_to_message_id=message.id)
+                case "creator":
+                    rules=group_rules(message.chat.id)
+                    new_rules=message.text.split(" ")[2]
+                    if re.search(",",new_rules)==None:
+                        new_rules1=remove_rule_in_list(rules,new_rules)
+                    else:
+                        ind=0
+                        new_rules2=rules
+                        for i in new_rules.split(","):
+                            new_rules1=remove_rule_in_list(new_rules2,int(i)-ind)
+                            new_rules2=new_rules1
+                            ind+=1
+                    settings_group_rules(message.chat.id,new_rules1)
+                    await bot.send_message(message.chat.id,"Правило чата удалено",reply_to_message_id=message.id)
+                case "left":
+                    rules=group_rules(message.chat.id)
+                    new_rules=message.text.split(" ")[2]
+                    if re.search(",",new_rules)==None:
+                        new_rules1=remove_rule_in_list(rules,new_rules)
+                    else:
+                        ind=0
+                        new_rules2=rules
+                        for i in new_rules.split(","):
+                            new_rules1=remove_rule_in_list(new_rules2,int(i)-ind)
+                            new_rules2=new_rules1
+                            ind+=1
+                    settings_group_rules(message.chat.id,new_rules1)
+                    await bot.send_message(message.chat.id,"Правило чата удалено",reply_to_message_id=message.id)
+                case _:
+                    await bot.send_message(message.chat.id,"Вы не можете удалять правило не являясь модератором",reply_to_message_id=message.id)
