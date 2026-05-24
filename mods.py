@@ -634,28 +634,28 @@ def mods(bot):
                 await bot.send_message(message.chat.id, f"Количество варнов для бана изменено до {message.text.split()[2]}", reply_to_message_id=message.id)
             case _:
                 await bot.send_message(message.chat.id, "Данная команда доступна только администрации и модерации", reply_to_message_id=message.id)
-    @bot.message_handler(regexp='Задать правила|Settings Rules',chat_types=['supergroup','group'])
-    async def settings_rules(message):
+    @bot.message_handler(regexp='Задать правило|Settings Rule',chat_types=['supergroup','group'])
+    async def settings_rule(message):
         if message.from_user.first_name=="Telegram":
             pass
         else:
-            role=await bot.get_chat_member()
+            role=await bot.get_chat_member(message.chat.id,message.from_user.id)
             match role.status:
-                case "":
+                case "administrator":
                     rules=""
                     for i in message.text.split("\n")[1::]:
                         rules+=i+"  "
                     rules=rules.strip().replace("  ","|")
                     settings_group_rules(message.chat.id,rules)
                     await bot.send_message(message.chat.id,"Правила чата заданы",reply_to_message_id=message.id)
-                case "":
+                case "creator":
                     rules=""
                     for i in message.text.split("\n")[1::]:
                         rules+=i+"  "
                     rules=rules.strip().replace("  ","|")
                     settings_group_rules(message.chat.id,rules)
                     await bot.send_message(message.chat.id,"Правила чата заданы",reply_to_message_id=message.id)
-                case "":
+                case "left":
                     rules=""
                     for i in message.text.split("\n")[1::]:
                         rules+=i+"  "
