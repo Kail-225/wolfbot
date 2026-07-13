@@ -53,7 +53,7 @@ def coms(bot):
             if i.user.username==None:
                 admins_chat+=f"{i.user.first_name}\n"
             else:
-                admins_chat+=f"[{i.user.first_name}](https://t.me/{i.user.username})\n"
+                admins_chat+=f"[{i.user.first_name}](https://telegram.me/{i.user.username})\n"
         await bot.send_message(message.chat.id, f"Список администраторов:\n{admins_chat}",parse_mode='Markdown', reply_to_message_id=message.id, disable_web_page_preview = True)
     @bot.message_handler(content_types=['new_chat_members'])
     async def nu(message):
