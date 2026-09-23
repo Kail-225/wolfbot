@@ -153,13 +153,14 @@ def search_money(a,b):
         print(f"Ошибка: {e}")
 
 def minus_money(a,b,c):
-    group=search_group(b)
-    money=search_money(a,b)
+    if b[0]!="-":
+        group=b
+    else:
+        group=search_group(b)
     try:
         table=Table("users",MetaData(),autoload_with=engine)
-        resp=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(MoneyUser=money-c)
+        resp=update(table).where(table.c.IdUser==a,table.c.GroupUser==group).values(MoneyUser=table.c.MoneyUser-c)
         with engine.begin() as con:
-            write_log(f"Пользователь под id {a} потратил {c} монет")
             return con.execute(resp)
     except Exception as e:
         print(f"Ошибка: {e}")
@@ -215,6 +216,19 @@ def support():
         for i in com:
             sup_id.append(i[1])
         return sup_id
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def search_personal(a):
+    try:
+        table=Table("support",MetaData(),autoload_with=engine)
+        resp=select(table).where(table.c.IdSupport==a).with_only_columns(table.c.RoleSupport)
+        with engine.begin() as con:
+            res=con.execute(resp).fetchone()
+        if res==None:
+            return None
+        else:
+            return res[0]
     except Exception as e:
         print(f"Ошибка: {e}")
 
@@ -528,7 +542,7 @@ def group_rules(a):
     except Exception as e:
         print(f"Ошибка: {e}")
 
-def update_vip(a,b):
+def update_vip(a,b,c):
     match a:
         case None:
             try:
@@ -541,7 +555,10 @@ def update_vip(a,b):
         case _:
             try:
                 table=Table("users",MetaData(),autoload_with=engine)
-                resp=update(table).where(table.c.IdUser==a).values(VIP=table.c.VIP+b)
+                if c==True:
+                    resp=update(table).where(table.c.IdUser==a).values(VIP=table.c.VIP+b)
+                else:
+                    resp=update(table).where(table.c.IdUser==a).values(VIP=table.c.VIP-b)
                 with engine.begin() as con:
                     con.execute(resp)
             except Exception as e:

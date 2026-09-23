@@ -5,12 +5,14 @@ from commands import coms
 from mods import mods
 from messages import messages
 from guilds import guild
+from personal import pers
 t=access()["tg"]
 bot=AsyncTeleBot(t)
 con()
 coms(bot)
 mods(bot)
 guild(bot)
+pers(bot)
 messages(bot)
 def signal_handler(sig,frame):
     write_log("Бот был отключён")

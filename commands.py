@@ -100,6 +100,7 @@ def coms(bot):
                     await bot.delete_message(message.chat.id, mes_test.message_id)
                     await bot.kick_chat_member(message.chat.id,message.from_user.id)
                     await bot.delete_message(message.chat.id, message.id)
+                    await bot.unban_chat_member(message.chat.id,message.from_user.id)
                 else:
                     pass
             else:
@@ -158,6 +159,7 @@ def coms(bot):
                                 minus_money(message.from_user.id,message.chat.id,count*int(sell_count[4]))
                                 minus_item(item,count)
                                 add_item(message.from_user.id,message.chat.id,item,count)
+                                write_log(f"Пользователь под id {message.from_user.id} купил {item} в количестве {count} за {count*int(sell_count[4])} монет")
                                 await bot.send_message(message.chat.id,f"Вы успешно купили {item} в количестве {count} за {count*int(sell_count[4])} монет",reply_to_message_id=message.id)
                             else:
                                 await bot.send_message(message.chat.id,f"У вас недостаточно монет для покупки",reply_to_message_id=message.id)
